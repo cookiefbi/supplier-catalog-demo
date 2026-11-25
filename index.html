@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>База постачальників</title>
+<meta name="description" content="Демо каталогу постачальників з Китаю у форматі Telegram Mini App">
+<meta name="theme-color" content="#EFEFF4">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#EFEFF4; --section:#FFFFFF; --text:#000000; --hint:#6D6D72; --sep:rgba(60,60,67,.18);
+  --link:#1E73BE; --btn:#1E73BE; --btn-text:#FFFFFF; --field:#E3E3E8;
+  --brass:#8C6A33; --brass-soft:#F3EBDD; --brass-ink:#6E5226;
+  --ok:#2E9E5B; --stub:#FAF8F3; --perf:#C9C2B4;
+  --chat-bg:#D9E4CF; --bubble-in:#FFFFFF; --bubble-out:#E1FEC6;
+  --shadow:0 8px 28px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
+  --mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Roboto","Segoe UI",system-ui,sans-serif;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --bg:#000000; --section:#1C1C1E; --text:#FFFFFF; --hint:#98989F; --sep:rgba(84,84,88,.6);
+  --link:#5EB5F7; --btn:#1F7BC8; --btn-text:#FFFFFF; --field:#2C2C2E;
+  --brass:#D2AE74; --brass-soft:#2E2618; --brass-ink:#E4C793;
+  --ok:#4CC97D; --stub:#232220; --perf:#4A463F;
+  --chat-bg:#0E1621; --bubble-in:#182533; --bubble-out:#2B5278;
+  --shadow:0 10px 30px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:16px/1.35 var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+::selection{background:color-mix(in srgb,var(--btn) 30%,transparent)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--btn);outline-offset:2px;border-radius:8px}
+input{font:inherit;color:inherit;caret-color:var(--btn)}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+#app{position:relative;max-width:430px;height:100%;margin:0 auto;overflow:hidden;background:var(--bg)}
+@media (min-width:500px){body{background:color-mix(in srgb,var(--bg) 70%,#808080)}#app{box-shadow:0 0 0 1px var(--sep)}}
+.view{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--bg);will-change:transform}
+.view.enter{animation:enter .34s cubic-bezier(.2,.8,.2,1) both}
+.view.leave{animation:leave .34s cubic-bezier(.2,.8,.2,1) both}
+.view.enter-back{animation:enterBack .34s cubic-bezier(.2,.8,.2,1) both}
+.view.leave-back{animation:leaveBack .34s cubic-bezier(.2,.8,.2,1) both;z-index:2}
+@keyframes enter{from{transform:translateX(100%)}to{transform:none}}
+@keyframes leave{to{transform:translateX(-28%);filter:brightness(.92)}}
+@keyframes enterBack{from{transform:translateX(-28%);filter:brightness(.92)}to{transform:none}}
+@keyframes leaveBack{to{transform:translateX(100%)}}
+.scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.scroll::-webkit-scrollbar{width:0}
+
+/* top bar */
+.bar{display:flex;align-items:center;gap:4px;height:52px;padding:0 6px;background:var(--section);border-bottom:.5px solid var(--sep);flex:none}
+.bar h1{flex:1;margin:0;font-size:17px;font-weight:600;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .sub{display:block;font-size:12.5px;font-weight:400;color:var(--hint)}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:12px;color:var(--link)}
+.icon-btn:active{background:var(--field)}
+.back{display:flex;align-items:center;gap:0;color:var(--link);font-size:17px;padding:0 8px 0 2px;height:44px;min-width:44px}
+.back svg{width:26px;height:26px;stroke-width:2}
+
+/* home */
+.seg{display:grid;grid-template-columns:1fr 1fr;margin:12px 16px 0;padding:2px;background:var(--field);border-radius:10px}
+.seg button{height:32px;border-radius:8px;font-size:14px;font-weight:500;color:var(--text)}
+.seg button[aria-pressed="true"]{background:var(--section);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:#636366}
+.search{display:flex;align-items:center;gap:6px;margin:12px 16px 0;height:38px;padding:0 10px;border-radius:10px;background:var(--field);color:var(--hint)}
+.search svg{width:18px;height:18px}
+.search input{flex:1;border:0;background:none;outline:none;font-size:16px;color:var(--text);min-width:0}
+.search input::placeholder{color:var(--hint)}
+.access{margin:16px 16px 0;padding:12px 14px;border-radius:12px;background:var(--section);display:flex;align-items:center;gap:12px}
+.access .seal{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--brass-soft);color:var(--brass)}
+.access .seal svg{width:18px;height:18px}
+.access b{display:block;font-size:15px;font-weight:600}
+.access span{font-size:13px;color:var(--hint)}
+.access .go{margin-left:auto;color:var(--link);font-size:15px;font-weight:500;padding:8px 0 8px 8px}
+.access.full .seal{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.cap{margin:22px 32px 6px;font-size:13px;color:var(--hint);text-transform:uppercase;letter-spacing:.02em}
+.list{margin:0 16px;background:var(--section);border-radius:12px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 12px 0 14px;text-align:left;position:relative}
+.row:active{background:var(--field)}
+.row + .row::before{content:"";position:absolute;top:0;left:58px;right:0;border-top:.5px solid var(--sep)}
+.row .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 17%,var(--section));flex:none}
+:root[data-theme="dark"] .row .ic{color:color-mix(in srgb,var(--c) 70%,#fff);background:color-mix(in srgb,var(--c) 22%,var(--section))}
+.row .ic svg{width:19px;height:19px;stroke-width:2.1}
+.row .t{flex:1;font-size:16px;font-weight:400;padding:12px 0}
+.row .n{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px;color:var(--hint);min-width:2.4ch;text-align:right}
+.row .chev{width:16px;height:16px;color:var(--hint);opacity:.6;stroke-width:2.2}
+.row .own{width:16px;height:16px;color:var(--ok);stroke-width:2.4}
+.foot{margin:18px 32px 0;font-size:13px;color:var(--hint);line-height:1.4}
+
+/* supplier cards */
+.cat-head{padding:16px 16px 4px;display:flex;align-items:baseline;gap:8px}
+.cat-head h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+.cat-head span{color:var(--hint);font-size:15px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 16px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:32px;padding:0 13px;border-radius:16px;background:var(--section);font-size:14px;font-weight:500;color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--section)}
+.cards{display:grid;gap:12px;padding:12px 16px 0}
+.card{background:var(--section);border-radius:14px;overflow:hidden;text-align:left;width:100%;display:block}
+.card:active{transform:scale(.99)}
+.card-main{display:flex;gap:12px;padding:12px}
+.ph{position:relative;flex:none;width:92px;height:92px;border-radius:10px;overflow:hidden;display:grid;place-items:center}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph svg{width:38px;height:38px;stroke-width:1.3;opacity:.55}
+.ph .cnt{position:absolute;right:5px;bottom:5px;font:600 11px/1 var(--sans);color:#fff;background:rgba(0,0,0,.45);padding:3px 5px;border-radius:6px}
+.meta{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
+.meta h3{margin:0;font-size:16px;font-weight:600;line-height:1.2}
+.code{display:flex;flex-wrap:wrap;gap:4px;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+.code span{font-family:var(--mono);padding:2px 6px;border-radius:5px;background:var(--bg);color:var(--text)}
+.hid{color:var(--hint)!important;display:inline-flex;align-items:center;gap:3px}
+.hid svg{width:12px;height:12px;stroke-width:2.2;color:var(--brass)}
+.cells .hid svg{width:14px;height:14px}
+.ver{font-size:13px;color:var(--hint);display:flex;align-items:center;gap:5px}
+.ver i{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block}
+.ver.old i{background:var(--hint)}
+.ver .mono{color:var(--text)}
+.goods{font-size:13.5px;color:var(--hint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* tear-off stub: the signature */
+.stub{position:relative;background:var(--stub);min-height:46px;overflow:hidden}
+.stub::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:radial-gradient(circle,var(--perf) 1.1px,transparent 1.4px) 0 0/7px 2px repeat-x;z-index:3}
+/* the cover carries the lower half of the perforation away when torn */
+.cover::before,.big-cover::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:radial-gradient(circle,var(--perf) 1.1px,transparent 1.4px) 0 -1px/7px 2px repeat-x}
+.stub.tearing::before{background-position:0 1px}
+.stub-in{display:flex;align-items:center;gap:14px;padding:12px 14px 12px 14px;font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+.stub-in .f{display:flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stub-in svg{width:16px;height:16px;color:var(--hint)}
+.cover{position:absolute;inset:0;z-index:2;background:var(--stub);display:flex;align-items:center;gap:10px;padding:0 14px;transform-origin:12% 0;color:var(--hint);font-family:var(--mono);font-size:13.5px}
+.cover .dots{flex:1;letter-spacing:.12em;white-space:nowrap;overflow:hidden}
+.pin{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 8px;border-radius:14px;background:var(--brass-soft);color:var(--brass-ink);font:600 13px/1 var(--sans);flex:none}
+.pin svg{width:15px;height:15px;color:var(--brass);stroke-width:2}
+.stub.open .cover{display:none}
+.stub.tearing .cover{display:flex;animation:tear .62s cubic-bezier(.3,.7,.2,1) forwards}
+.stub.tearing .stub-in{animation:reveal .5s .12s ease-out both}
+@keyframes tear{0%{transform:none}35%{transform:translateY(3px) rotate(-1.5deg)}100%{transform:translate(18px,58px) rotate(7deg);opacity:0}}
+@keyframes reveal{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:none}}
+.stub.open .stub-in .f{color:var(--text)}
+
+/* supplier page */
+.gallery{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;background:var(--section)}
+.gallery::-webkit-scrollbar{display:none}
+.gallery > *{flex:0 0 100%;scroll-snap-align:start;aspect-ratio:4/4.4;display:grid;place-items:center}
+.gallery img{width:100%;height:100%;object-fit:cover}
+.gallery svg{width:72px;height:72px;stroke-width:1.1;opacity:.5}
+.gdots{display:flex;justify-content:center;gap:6px;padding:10px 0 0;background:var(--section)}
+.gdots i{width:6px;height:6px;border-radius:50%;background:var(--sep)}
+.gdots i.on{background:var(--text)}
+.sup-head{background:var(--section);padding:12px 16px 16px}
+.sup-head h2{margin:0 0 4px;font-size:24px;font-weight:700;letter-spacing:-.015em}
+.sup-head .goods{white-space:normal;font-size:15px}
+.cells{display:grid;grid-template-columns:repeat(3,1fr);margin:14px 0 0;border-top:.5px solid var(--sep);border-bottom:.5px solid var(--sep)}
+.cells div{padding:8px 10px 8px 0}
+.cells div + div{border-left:.5px solid var(--sep);padding-left:10px}
+.cells small{display:block;font-size:12px;color:var(--hint);text-transform:uppercase;letter-spacing:.03em}
+.cells b{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:16px;font-weight:600}
+.contact-tag{margin:16px 16px 0;border-radius:14px;overflow:hidden;background:var(--section)}
+.contact-tag .stub{min-height:0}
+.ct-rows{position:relative}
+.ct-row{display:flex;align-items:center;gap:12px;padding:12px 14px;position:relative}
+.ct-row + .ct-row::before{content:"";position:absolute;top:0;left:50px;right:0;border-top:.5px solid var(--sep)}
+.ct-row .k{font:13px/1 var(--sans);color:var(--hint);margin-bottom:4px;display:block}
+.ct-row .v{font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums;word-break:break-word}
+.ct-row .v.cn{font-family:var(--sans);font-size:13px;color:var(--hint);margin-top:2px}
+.ct-row .v.addr{font-family:var(--sans);font-size:15px}
+.nb{white-space:nowrap;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.ct-row > div{flex:1;min-width:0}
+.ct-row .ico{width:26px;height:26px;color:var(--hint)}
+.copy{width:40px;height:40px;display:grid;place-items:center;border-radius:10px;color:var(--link)}
+.copy:active{background:var(--field)}
+.big-cover{position:absolute;inset:0;z-index:2;background:var(--stub);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:16px;transform-origin:10% 0}
+.big-cover .dots{font-family:var(--mono);color:var(--hint);letter-spacing:.12em;font-size:14px;line-height:1.9}
+.stub.open .big-cover{display:none}
+.stub.tearing .big-cover{animation:tear .7s cubic-bezier(.3,.7,.2,1) forwards}
+.stub.tearing .ct-rows{animation:reveal .55s .15s ease-out both}
+.note{margin:16px 16px 0;background:var(--section);border-radius:14px;padding:14px}
+.note h4{margin:0 0 6px;font-size:13px;color:var(--hint);font-weight:400;text-transform:uppercase;letter-spacing:.02em}
+.note p{margin:0;font-size:15px;line-height:1.45}
+.note.locked p{color:var(--hint)}
+.mainbtn-wrap{flex:none;padding:8px 16px calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
+.mainbtn{width:100%;height:50px;border-radius:12px;background:var(--btn);color:var(--btn-text);font-size:16px;font-variant-numeric:tabular-nums;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px}
+.mainbtn:active{filter:brightness(.92)}
+.mainbtn[disabled]{opacity:.7}
+.mainbtn .spin{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* sheet */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:20;animation:fade .25s ease-out both}
+.scrim.out{animation:fade .22s ease-in reverse both}
+@keyframes fade{from{opacity:0}}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:21;background:var(--bg);border-radius:14px 14px 0 0;padding:8px 0 0;animation:up .36s cubic-bezier(.2,.85,.25,1) both;max-height:92%;display:flex;flex-direction:column}
+.sheet.out{animation:down .24s ease-in both}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes down{to{transform:translateY(100%)}}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--sep);margin:0 auto 6px}
+.sheet-h{display:flex;align-items:center;padding:4px 8px 4px 16px}
+.sheet-h h3{flex:1;margin:0;font-size:19px;font-weight:700}
+.plans{margin:10px 16px 0;background:var(--section);border-radius:12px;overflow:hidden}
+.plan{display:flex;align-items:center;gap:12px;width:100%;padding:13px 14px;text-align:left;position:relative}
+.plan + .plan::before{content:"";position:absolute;top:0;left:48px;right:0;border-top:.5px solid var(--sep)}
+.radio{width:22px;height:22px;border-radius:50%;border:1.6px solid var(--hint);flex:none;display:grid;place-items:center}
+.plan[aria-checked="true"] .radio{border-color:var(--btn);background:var(--btn)}
+.plan[aria-checked="true"] .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.plan .pt{flex:1;min-width:0}
+.plan .pt b{display:block;font-size:16px;font-weight:600}
+.plan .pt span{font-size:13.5px;color:var(--hint)}
+.plan .price{font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;white-space:nowrap}
+.plan .per{display:block;font:12px var(--sans);color:var(--ok);text-align:right;margin-top:2px}
+.fine{margin:10px 32px 0;font-size:12.5px;color:var(--hint);text-align:center}
+
+/* toast */
+.toast{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;background:rgba(30,30,30,.92);color:#fff;font-size:14px;padding:10px 14px;border-radius:12px;display:flex;align-items:center;gap:8px;animation:toast 1.9s ease both;white-space:nowrap}
+.toast svg{width:18px;height:18px;color:#4CD964;stroke-width:2.4}
+@keyframes toast{0%{opacity:0;transform:translate(-50%,8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+
+/* bot chat */
+.chat-bar{display:flex;align-items:center;gap:10px;height:56px;padding:0 8px 0 2px;background:var(--section);border-bottom:.5px solid var(--sep);flex:none}
+.ava{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none;background:#3F8FD8}
+.ava svg{width:21px;height:21px}
+.chat-bar .who{flex:1;min-width:0}
+.chat-bar .who b{display:block;font-size:16px;font-weight:600}
+.chat-bar .who span{font-size:13px;color:var(--link)}
+.chat{flex:1;overflow-y:auto;background:var(--chat-bg);padding:12px 10px 16px;display:flex;flex-direction:column;gap:6px}
+.chat::-webkit-scrollbar{width:0}
+.day{align-self:center;font-size:13px;font-weight:500;color:#fff;background:rgba(0,0,0,.25);padding:3px 10px;border-radius:12px;margin:2px 0 6px}
+.msg{max-width:84%;border-radius:16px;padding:7px 10px 6px;font-size:15px;line-height:1.35;position:relative;animation:pop .28s cubic-bezier(.2,.8,.2,1) both;box-shadow:0 1px 1px rgba(0,0,0,.08)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+.msg.out{align-self:flex-end;background:var(--bubble-out);border-bottom-right-radius:6px}
+.msg.in{align-self:flex-start;background:var(--bubble-in);border-bottom-left-radius:6px}
+.msg .time{float:right;font-size:11.5px;color:var(--hint);margin:6px 0 -2px 10px}
+.msg.out .time{color:color-mix(in srgb,var(--ok) 80%,var(--hint))}
+.fwd{font-size:14px;color:var(--link);margin-bottom:4px;display:flex;gap:5px;align-items:center}
+.fwd svg{width:15px;height:15px}
+.fwd b{font-weight:600}
+.media{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;gap:2px;border-radius:10px;overflow:hidden;margin:2px -4px 6px;aspect-ratio:1.25}
+.media > *:first-child{grid-row:1/3}
+.media img{width:100%;height:100%;object-fit:cover;display:block}
+.mingpian{background:#FBF8F1;color:#1d1d1d;display:flex;flex-direction:column;justify-content:center;padding:6px 7px;font-size:8px;line-height:1.4;white-space:nowrap;overflow:hidden;position:relative;font-family:"PingFang SC","Microsoft YaHei",var(--sans)}
+.mingpian b{font-size:12px;letter-spacing:.06em}
+.mingpian em{font-style:normal;font-size:7px;letter-spacing:.08em;color:#555;margin-bottom:4px}
+.mingpian .seal-r{position:absolute;right:6px;top:6px;width:18px;height:18px;border:1.5px solid #C4382A;color:#C4382A;font-size:9px;display:grid;place-items:center;border-radius:2px;transform:rotate(-6deg)}
+.rec{background:var(--bg);border-radius:10px;margin:6px -2px 4px;overflow:hidden}
+.rec div{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;font-size:14px}
+.rec div + div{border-top:.5px solid var(--sep)}
+.rec span{color:var(--hint)}
+.rec b{font-weight:500;font-variant-numeric:tabular-nums;text-align:right;display:flex;align-items:center;gap:5px}
+.rec b svg{width:14px;height:14px;color:var(--ok);stroke-width:2.6}
+.kb{display:grid;grid-template-columns:1fr 1fr;gap:4px;align-self:flex-start;width:84%;animation:pop .28s .05s cubic-bezier(.2,.8,.2,1) both}
+.kb.one{grid-template-columns:1fr}
+.kb.three{grid-template-columns:1fr 1fr 1fr}
+.kb button{min-height:40px;border-radius:10px;background:#5C6C58;color:#fff;font-size:15px;font-weight:500;padding:6px 8px}
+:root[data-theme="dark"] .kb button{background:#2A3B4D}
+.kb button:active{filter:brightness(1.15)}
+.kb button[disabled]{cursor:default}
+.kb button.chosen{box-shadow:inset 0 0 0 2px rgba(255,255,255,.75)}
+.typing{align-self:flex-start;background:var(--bubble-in);border-radius:16px;border-bottom-left-radius:6px;padding:12px 14px;display:flex;gap:4px}
+.typing i{width:7px;height:7px;border-radius:50%;background:var(--hint);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes blink{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.composer{flex:none;display:flex;align-items:center;gap:8px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:var(--section);border-top:.5px solid var(--sep)}
+.composer input{flex:1;height:38px;border-radius:19px;border:.5px solid var(--sep);background:var(--bg);padding:0 14px;outline:none;font-size:16px}
+.composer .send{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--btn);color:#fff}
+.composer .send svg{width:19px;height:19px;stroke-width:2.2}
+.replay{display:flex;align-items:center;gap:6px;color:var(--link);font-size:15px;padding:0 8px;height:44px}
+
+.empty{margin:40px 32px;text-align:center;color:var(--hint);font-size:15px}
+.empty svg{width:40px;height:40px;stroke-width:1.3;margin-bottom:8px}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-delay:0ms!important}}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/></symbol>
+    <symbol id="i-seal" viewBox="0 0 24 24"><circle cx="12" cy="5.5" r="2.5"/><path d="M12 8v4"/><path d="M7 12h10l-1.5 8.5h-7z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8"/></symbol>
+    <symbol id="i-wechat" viewBox="0 0 24 24"><path d="M9.5 4C5.4 4 2.5 6.6 2.5 9.7c0 1.8 1 3.4 2.6 4.4l-.6 2 2.4-1.2c.8.2 1.7.4 2.6.4"/><path d="M15 9c3.6 0 6.5 2.3 6.5 5.2 0 1.5-.8 2.9-2.1 3.8l.5 1.8-2.1-1a7.6 7.6 0 0 1-2.8.5c-3.6 0-6.5-2.3-6.5-5.1S11.4 9 15 9z"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a11 11 0 0 0 6 6l1.5-2 4 1.5v3a2 2 0 0 1-2 2A16 16 0 0 1 4.5 5.5a2 2 0 0 1 2-2z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0 1 13 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="i-bot" viewBox="0 0 24 24"><rect x="4.5" y="8" width="15" height="11" rx="3"/><path d="M12 4.5V8M9.5 13v1M14.5 13v1M2.5 12.5v2M21.5 12.5v2"/></symbol>
+    <symbol id="i-fwd" viewBox="0 0 24 24"><path d="M14 5l7 7-7 7"/><path d="M21 12H10a6 6 0 0 0-6 6v1"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></symbol>
+    <symbol id="i-dress" viewBox="0 0 24 24"><path d="M9 3v3.5L7 9l2 1.5L5.5 21h13L15 10.5 17 9l-2-2.5V3"/><path d="M9 6.5c1.8 1 4.2 1 6 0"/></symbol>
+    <symbol id="i-shirt" viewBox="0 0 24 24"><path d="M8.5 3.5L3.5 6l1.8 4 2.2-1V20.5h9V9l2.2 1 1.8-4-5-2.5c-.4 1.6-1.7 2.6-3.5 2.6S8.9 5.1 8.5 3.5z"/></symbol>
+    <symbol id="i-kids" viewBox="0 0 24 24"><path d="M9 3.5h6l4.5 4-2 3L15 9.5v6.5l2 4.5h-4l-1-3-1 3H7l2-4.5V9.5l-2.5 1-2-3z"/></symbol>
+    <symbol id="i-heel" viewBox="0 0 24 24"><path d="M3 17.5c3.5 0 6-1.5 8.5-5.5l1.5-2.5 1.8 1.2c-.6 3 1.5 5 4.7 5.3l1.5.2v2.3H3z"/><path d="M17.5 18.5v3"/></symbol>
+    <symbol id="i-coat" viewBox="0 0 24 24"><path d="M9 3.5l-4 3v14h5V12M15 3.5l4 3v14h-5V12"/><path d="M9 3.5l3 5 3-5M12 8.5V20.5M10 20.5h4"/></symbol>
+    <symbol id="i-knit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M5 9c4 0 9 2 12 8M7 5.5c4 1.5 8 5 10 11.5M4.5 13.5c3 .2 7 2 9 6.3M15 4.6C14 9 9 14 4.6 15"/></symbol>
+    <symbol id="i-bed" viewBox="0 0 24 24"><path d="M3 19V6M3 15h18v4M21 15v-3a3 3 0 0 0-3-3h-7v6"/><circle cx="7" cy="11.5" r="1.8"/></symbol>
+    <symbol id="i-sofa" viewBox="0 0 24 24"><path d="M5 11V8.5A2.5 2.5 0 0 1 7.5 6h9A2.5 2.5 0 0 1 19 8.5V11"/><path d="M3 18.5V13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5.5zM6 18.5V20.5M18 18.5V20.5"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24"><path d="M4.5 9h11v4.5a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z"/><path d="M15.5 10.5h1.5a2.5 2.5 0 0 1 0 5h-1.8M3.5 21h13M8 3.5c-.8 1 .8 2 0 3M12 3.5c-.8 1 .8 2 0 3"/></symbol>
+    <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3.5 12.5v-8a1 1 0 0 1 1-1h8l8 8a1.4 1.4 0 0 1 0 2l-7 7a1.4 1.4 0 0 1-2 0z"/><circle cx="8" cy="8" r="1.6"/></symbol>
+    <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 20.5V11l5 3v-3l5 3v-3l5 3V4.5h3v16zM2 20.5h20"/><path d="M7 17.5h2M12 17.5h2"/></symbol>
+  </defs>
+</svg>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const ic=(n,c="i")=>`<svg class="${c}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money=n=>n.toLocaleString("uk-UA").replace(/ /g," ")+" ₴";
+function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+const TODAY=new Date(2026,10,24);
+const fmtD=d=>String(d.getDate()).padStart(2,"0")+"."+String(d.getMonth()+1).padStart(2,"0");
+const daysAgo=n=>{const d=new Date(TODAY);d.setDate(d.getDate()-n);return d};
+
+/* ---------- mock data (all invented) ---------- */
+const CATS=[
+ {id:"women",name:"Жіночий одяг",n:46,icon:"dress",color:"#E0567A",suf:["Fashion","Lady","Mode","Style"],
+  goods:["сукні, костюми","трикотажні сукні","денім, сорочки","вечірні сукні","базовий одяг"],markets:[["Шісаньхан","十三行"],["Чжаньсі","站西"],["Байма","白马"]]},
+ {id:"men",name:"Чоловічий одяг",n:31,icon:"shirt",color:"#3A78D8",suf:["Men","Gentle","Homme","Wear"],
+  goods:["сорочки, поло","куртки, парки","костюми","спорт-шик","джинси"],markets:[["Чжаньсі","站西"],["Байма","白马"],["Шахе","沙河"]]},
+ {id:"kids",name:"Дитяче",n:22,icon:"kids",color:"#F29A2E",suf:["Kids","Baby","Little","Mini"],
+  goods:["0–3 роки","школа 7–14","комбінезони","піжами","верхній одяг"],markets:[["Шахе","沙河"],["Чжаньсі","站西"]]},
+ {id:"shoes",name:"Жіноче взуття",n:27,icon:"heel",color:"#B04FC9",suf:["Shoes","Step","Heels","Walk"],
+  goods:["туфлі, лофери","кросівки","чоботи","босоніжки","ботильйони"],markets:[["Байюнь Шуз","白云鞋城"],["Цзіньлун","金龙"]]},
+ {id:"fur",name:"Шуби",n:14,icon:"coat",color:"#9A6B45",suf:["Fur","Mink","Fox","Furs"],
+  goods:["норка, лис","мутон, дублянки","жилети з хутра","шуби з песця","комбіновані куртки"],markets:[["Шахе","沙河"],["Байма","白马"]]},
+ {id:"knit",name:"Трикотаж",n:19,icon:"knit",color:"#D2643C",suf:["Knit","Wool","Yarn","Cashmere"],
+  goods:["кашемір","светри, кардигани","трикотажні костюми","шапки, шарфи","водолазки"],markets:[["Канле","康乐"],["Шісаньхан","十三行"]]},
+ {id:"bed",name:"Постільна білизна",n:11,icon:"bed",color:"#4E9FA6",suf:["Home","Textile","Sleep","Linen"],
+  goods:["сатин, страйп-сатин","ковдри, подушки","дитяча постіль","готельний текстиль","пледи"],markets:[["Іу Футянь","义乌福田"],["Канле","康乐"]]},
+ {id:"furn",name:"Меблі (Фошань)",n:17,icon:"sofa",color:"#6F7F45",suf:["Furniture","Living","Casa","Design"],
+  goods:["дивани, крісла","столи, стільці","корпусні меблі","ліжка","меблі для кафе"],markets:[["Лецун","乐从"],["Лунцзян","龙江"]]},
+ {id:"dish",name:"Посуд",n:9,icon:"cup",color:"#C44D4D",suf:["Ceramics","Kitchen","Table","Porcelain"],
+  goods:["кераміка","скло, келихи","столові прибори","посуд для HoReCa","чайні набори"],markets:[["Іу Футянь","义乌福田"],["Чаочжоу","潮州"]]},
+ {id:"tech",name:"Електроніка",n:24,icon:"chip",color:"#5A5FD6",suf:["Tech","Digital","Smart","Electronic"],
+  goods:["аксесуари до телефонів","навушники","павербанки","смарт-годинники","кабелі, зарядки"],markets:[["Хуацянбей","华强北"]]},
+ {id:"outlet",name:"Аутлет",n:12,icon:"tag",color:"#2E9E73",suf:["Stock","Outlet","Lots","Sale"],
+  goods:["сток брендів","залишки колекцій","мікс на вагу","взуттєвий сток","ліквідація"],markets:[["Шахе","沙河"],["Байма","白马"]]},
+ {id:"oem",name:"Фабрики під ваш бренд",n:8,icon:"factory",color:"#55606E",suf:["Factory","Garment","Manufacture","OEM"],
+  goods:["пошив від 300 шт","трикотаж під лейбл","взуття під бренд","упаковка, бірки","спортивний одяг"],markets:[["Дунгуань","东莞"],["Хумень","虎门"],["Цзіньцзян","晋江"]],factory:true},
+];
+const A=["Snow","Golden","Lucky","Jade","Silk","Red","Moon","Cloud","Lotus","Pearl","Star","Mei","Ling","Xin","Hua","Bright","Sun","Blue","Plum","Ocean"];
+const B=["Fox","Line","House","Way","Garden","Bridge","Wing","Leaf","River","Field","Peak","Lane","Gate","Stone"];
+const NOTES=[
+ "Відповідає швидко, краще писати зранку за Києвом. Фото складу шле в той же день.",
+ "Мінімалка невелика, можна мікс розмірів. Ціни нижчі, якщо береш від 20 шт.",
+ "Привозить нові моделі щопонеділка. Англійською не говорить — пишіть через перекладач.",
+ "Працюють з карго, самі передають на склад. Брак міняють без питань.",
+ "Є шоурум на поверсі вище, туди варто зайти особисто. Дають знижку постійним.",
+];
+const DB={};const BY_ID={};
+CATS.forEach((c,ci)=>{
+  const r=rng(ci*977+13);const arr=[];
+  for(let k=0;k<c.n;k++){
+    const m=c.markets[Math.floor(r()*c.markets.length)];
+    const name=A[Math.floor(r()*A.length)]+" "+B[Math.floor(r()*B.length)]+" "+c.suf[Math.floor(r()*c.suf.length)];
+    const floor=c.factory?null:(1+Math.floor(r()*5))+"F";
+    const stall=c.factory?null:String.fromCharCode(65+Math.floor(r()*4))+"-"+(100+Math.floor(r()*380));
+    const ago=Math.floor(r()*r()*60);
+    const wx="demo_"+(name.split(" ")[0]+"_"+name.split(" ")[1]).toLowerCase()+"_"+(10+Math.floor(r()*89));
+    const ph="+86 100 0000 "+String(1000+Math.floor(r()*8999));
+    const s={id:c.id+"-"+k,cat:c.id,name,market:m[0],marketCn:m[1],floor,stall,
+      verified:daysAgo(ago),ago,goods:c.goods[Math.floor(r()*c.goods.length)],
+      moq:c.factory?"від "+(3+Math.floor(r()*5))*100+" шт":"від "+(1+Math.floor(r()*5))+" шт на модель",
+      wechat:wx,phone:ph,note:NOTES[Math.floor(r()*NOTES.length)],photos:[],tone:Math.floor(r()*4)};
+    arr.push(s);
+  }
+  arr.sort((a,b)=>a.ago-b.ago);
+  DB[c.id]=arr;
+});
+// hero supplier with real market photos
+Object.assign(DB.fur[0],{name:"Snow Fox Fur",market:"Шахе",marketCn:"沙河",floor:"3F",stall:"A-218",verified:daysAgo(2),ago:2,
+  goods:"шуби з лиса й песця, норкові куртки, мутон",moq:"від 2 шт на модель",wechat:"demo_snowfox_218",phone:"+86 100 0000 4172",
+  note:"Свій цех у Хебеї, тому ціни нижчі за сусідів. Лис і песець в наявності, норку шиють під замовлення за 10 днів. Мікс кольорів дозволяють.",
+  photos:["img/fur-1.jpg","img/fur-2.jpg","img/fur-3.jpg"]});
+Object.values(DB).flat().forEach(s=>BY_ID[s.id]=s);
+const catOf=id=>CATS.find(c=>c.id===id);
+const total=()=>CATS.reduce((a,c)=>a+DB[c.id].length,0);
+const PRICE={one:200,cat:2000,all:15500};
+
+/* ---------- state (memory only) ---------- */
+const S={all:false,cats:new Set(),sups:new Set(),stack:[],justOpened:null,botDone:false};
+const has=s=>S.all||S.cats.has(s.cat)||S.sups.has(s.id);
+
+/* ---------- theme ---------- */
+const tg=window.Telegram&&Telegram.WebApp&&Telegram.WebApp.initData?Telegram.WebApp:null;
+function setTheme(t){document.documentElement.dataset.theme=t;document.querySelector('meta[name="theme-color"]').content=t==="dark"?"#000000":"#EFEFF4";
+  if(tg){try{tg.setHeaderColor(t==="dark"?"#1C1C1E":"#FFFFFF");tg.setBackgroundColor(t==="dark"?"#000000":"#EFEFF4")}catch(e){}}
+  document.querySelectorAll("[data-theme-btn]").forEach(b=>{b.innerHTML=ic(t==="dark"?"sun":"moon");b.setAttribute("aria-label",t==="dark"?"Світла тема":"Темна тема")})}
+setTheme(tg?tg.colorScheme:(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"));
+if(tg){tg.ready();tg.expand();tg.onEvent("themeChanged",()=>setTheme(tg.colorScheme))}
+else matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>setTheme(e.matches?"dark":"light"));
+const toggleTheme=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+
+/* ---------- placeholders ---------- */
+function phStyle(s){const mix=[30,45,60,75][s.tone];return `background:color-mix(in srgb,var(--brass-soft) ${mix}%,var(--field));color:var(--brass)`}
+function thumb(s){
+  if(s.photos.length)return `<div class="ph"><img src="${s.photos[0]}" alt="" loading="lazy"><span class="cnt">${s.photos.length} фото</span></div>`;
+  return `<div class="ph" style="${phStyle(s)}">${ic(catOf(s.cat).icon)}</div>`;
+}
+const mask=(str,keep)=>str.slice(0,keep)+str.slice(keep).replace(/[^\s+\-]/g,"•");
+
+/* ---------- views ---------- */
+const app=document.getElementById("app");
+function mount(html,dir,after){
+  const old=app.querySelector(".view:not(.leave):not(.leave-back)");
+  const v=document.createElement("section");v.className="view";v.innerHTML=html;app.appendChild(v);
+  if(old&&dir){v.classList.add(dir==="fwd"?"enter":"enter-back");old.classList.add(dir==="fwd"?"leave":"leave-back");
+    setTimeout(()=>old.remove(),350)}else if(old)old.remove();
+  if(dir==="back")v.style.zIndex=1;
+  after&&after(v);
+  if(tg){S.stack.length?tg.BackButton.show():tg.BackButton.hide()}
+  return v;
+}
+function go(route,push=true){if(push)S.stack.push(S.cur);S.cur=route;render(route,"fwd")}
+function back(){if(!S.stack.length)return;S.cur=S.stack.pop();render(S.cur,"back")}
+if(tg)tg.BackButton.onClick(back);
+function render(r,dir){
+  if(r.v==="home")return homeView(dir,r);
+  if(r.v==="cat")return catView(r.id,dir);
+  if(r.v==="sup")return supView(r.id,dir);
+  if(r.v==="bot")return botView(dir);
+}
+const bar=(title,sub)=>`<header class="bar">
+  ${S.stack.length?`<button class="back" data-back aria-label="Назад">${ic("back")}<span>Назад</span></button>`:`<span style="width:44px"></span>`}
+  <h1>${esc(title)}${sub?`<span class="sub">${esc(sub)}</span>`:""}</h1>
+  ${themeBtn()}</header>`;
+const themeBtn=()=>{const d=document.documentElement.dataset.theme==="dark";return `<button class="icon-btn" data-theme-btn aria-label="${d?"Світла тема":"Темна тема"}">${ic(d?"sun":"moon")}</button>`};
+
+function accessRow(){
+  if(S.all)return `<div class="access full"><div class="seal">${ic("check")}</div><div><b>Уся база відкрита</b><span>${total()} постачальників</span></div></div>`;
+  const parts=[];if(S.cats.size)parts.push(S.cats.size+" "+(S.cats.size===1?"категорія":"категорії"));if(S.sups.size)parts.push(S.sups.size+" постач.");
+  return `<button class="access" data-buy-all style="width:calc(100% - 32px);text-align:left"><div class="seal">${ic("lock")}</div><div><b>${parts.length?"Відкрито: "+parts.join(", "):"Контакти закриті"}</b><span>Уся база — ${money(PRICE.all)}</span></div><span class="go">Відкрити</span></button>`;
+}
+function homeView(dir,r){
+  const q=(r&&r.q)||"";
+  const v=mount(`${bar("База постачальників","Китай · опт")}
+  <div class="scroll">
+    <div class="seg" role="group"><button aria-pressed="true">Каталог</button><button data-bot aria-pressed="false">Як додає адмін</button></div>
+    <label class="search">${ic("search")}<input type="search" placeholder="Назва, ринок, товар" value="${esc(q)}" aria-label="Пошук" enterkeyhint="search"></label>
+    <div data-res></div>
+  </div>`,dir);
+  const inp=v.querySelector("input"),res=v.querySelector("[data-res]");
+  const draw=()=>{const t=inp.value.trim().toLowerCase();S.cur.q=inp.value;res.innerHTML=t?searchList(t):catList();};
+  inp.addEventListener("input",draw);draw();
+}
+function catList(){
+  return `${accessRow()}<div class="cap">Категорії</div><div class="list">${CATS.map(c=>`
+    <button class="row" data-cat="${c.id}"><span class="ic" style="--c:${c.color}">${ic(c.icon)}</span>
+    <span class="t">${c.name}</span>${(S.all||S.cats.has(c.id))?ic("check","i own"):""}<span class="n">${DB[c.id].length}</span>${ic("chev","i chev")}</button>`).join("")}</div>
+    <p class="foot">${total()} постачальників · кожного перевіряємо особисто. Демо: дані й контакти вигадані.</p>`;
+}
+function searchList(t){
+  const cats=CATS.filter(c=>c.name.toLowerCase().includes(t));
+  const sups=Object.values(BY_ID).filter(s=>(s.name+" "+s.market+" "+s.goods+" "+catOf(s.cat).name).toLowerCase().includes(t)).slice(0,30);
+  if(!cats.length&&!sups.length)return `<div class="empty">${ic("search")}<div>Нічого не знайшли за «${esc(t)}».<br>Спробуйте ринок або товар: «Шахе», «кашемір».</div></div>`;
+  return (cats.length?`<div class="cap">Категорії</div><div class="list">${cats.map(c=>`<button class="row" data-cat="${c.id}"><span class="ic" style="--c:${c.color}">${ic(c.icon)}</span><span class="t">${c.name}</span><span class="n">${DB[c.id].length}</span>${ic("chev","i chev")}</button>`).join("")}</div>`:"")
+   +(sups.length?`<div class="cap">Постачальники · ${sups.length}</div><div class="cards" style="padding-top:0">${sups.map(card).join("")}</div>`:"");
+}
+function code(s){
+  if(!s.floor)return `<div class="code"><span>${esc(s.market)}</span><span>фабрика</span></div>`;
+  return `<div class="code"><span>${esc(s.market)}</span><span>${s.floor}</span>${stallTag(s)}</div>`;
+}
+// pavilion number is part of the paid contacts: hidden until unlocked
+const stallTag=s=>has(s)?`<span data-stall="${s.id}">${s.stall}</span>`:`<span class="hid" data-stall="${s.id}" aria-label="Павільйон приховано">${ic("lock")}•-•••</span>`;
+const ver=s=>`<div class="ver${s.ago>30?" old":""}"><i></i>перевірено <span class="mono">${fmtD(s.verified)}</span></div>`;
+function card(s){
+  const open=has(s);
+  return `<button class="card" data-sup="${s.id}">
+    <div class="card-main">${thumb(s)}<div class="meta"><h3>${esc(s.name)}</h3>${code(s)}<div class="goods">${esc(s.goods)}</div>${ver(s)}</div></div>
+    <div class="stub ${open?"open":""}" data-stub="${s.id}">
+      <div class="stub-in"><span class="f">${ic("wechat")}${esc(s.wechat)}</span><span class="f">${ic("phone")}${esc(s.phone.slice(-9))}</span></div>
+      <div class="cover"><span class="dots">${ic("wechat")} wxid ••••••  ${ic("phone")} +86 •••</span><span class="pin">${ic("seal")}200 ₴</span></div>
+    </div></button>`;
+}
+function catView(id,dir){
+  const c=catOf(id);const markets=[...new Set(DB[id].map(s=>s.market))];
+  const v=mount(`${bar(c.name,DB[id].length+" постачальників")}<div class="scroll">
+    <div class="chips" style="padding-top:12px" role="group" aria-label="Ринок"><button class="chip" aria-pressed="true" data-m="">Усі</button>${markets.map(m=>`<button class="chip" aria-pressed="false" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div>
+    <div class="cards" data-cards></div></div>
+    ${(S.all||S.cats.has(id))?"":`<div class="mainbtn-wrap"><button class="mainbtn" data-buy-cat="${id}">${ic("lock")}Відкрити всю категорію · ${money(PRICE.cat)}</button></div>`}`,dir);
+  const box=v.querySelector("[data-cards]");
+  const draw=m=>{box.innerHTML=DB[id].filter(s=>!m||s.market===m).map(card).join("")};
+  v.querySelectorAll(".chip").forEach(b=>b.onclick=()=>{v.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b));draw(b.dataset.m)});
+  draw("");
+}
+function supView(id,dir){
+  const s=BY_ID[id];const c=catOf(s.cat);const open=has(s);
+  const slides=s.photos.length?s.photos.map(p=>`<div><img src="${p}" alt="Товар ${esc(s.name)}"></div>`).join("")
+    :[0,1,2].map(k=>`<div style="${phStyle({...s,tone:(s.tone+k)%4})}">${ic(c.icon)}</div>`).join("");
+  const n=s.photos.length||3;
+  const addrUa=s.floor?`${esc(s.market)}, ${s.floor.replace("F"," поверх")}, павільйон <span class="nb">${s.stall.replace("-","‑")}</span>`:`${esc(s.market)}, фабрика`;
+  const addrCn=s.floor?`广州 ${s.marketCn} ${s.floor.replace("F","楼")} ${s.stall}`:`${s.marketCn} 工厂`;
+  const v=mount(`${bar(c.name)}<div class="scroll">
+    <div class="gallery" data-gal>${slides}</div><div class="gdots">${Array.from({length:n},(_,k)=>`<i class="${k?"":"on"}"></i>`).join("")}</div>
+    <div class="sup-head"><h2>${esc(s.name)}</h2><div class="goods">${esc(s.goods)} · ${esc(s.moq)}</div>
+      <div class="cells"><div><small>Ринок</small><b>${esc(s.market)}</b></div><div><small>${s.floor?"Поверх":"Тип"}</small><b>${s.floor||"OEM"}</b></div><div><small>${s.floor?"Павільйон":"Партія"}</small><b>${s.floor?stallTag(s):esc(s.moq.replace("від ",""))}</b></div></div>
+      <div style="margin-top:12px">${ver(s)}</div></div>
+    <div class="cap">Контакти</div>
+    <div class="contact-tag"><div class="stub ${open?"open":""}" data-stub="${s.id}" style="background:var(--section)">
+      <div class="ct-rows">
+        <div class="ct-row">${ic("wechat","i ico")}<div><span class="k">WeChat ID</span><div class="v">${esc(s.wechat)}</div></div><button class="copy" data-copy="${esc(s.wechat)}" aria-label="Скопіювати WeChat">${ic("copy")}</button></div>
+        <div class="ct-row">${ic("phone","i ico")}<div><span class="k">Телефон</span><div class="v">${esc(s.phone)}</div></div><button class="copy" data-copy="${esc(s.phone)}" aria-label="Скопіювати телефон">${ic("copy")}</button></div>
+        <div class="ct-row">${ic("pin","i ico")}<div><span class="k">Адреса на ринку</span><div class="v addr">${addrUa}</div><div class="v cn">${esc(addrCn)}</div></div><button class="copy" data-copy="${esc(addrCn)}" aria-label="Скопіювати адресу китайською">${ic("copy")}</button></div>
+      </div>
+      <div class="big-cover"><span class="pin">${ic("seal")}Закрито пломбою</span><div class="dots">wxid_••••••••<br>+86 ••• •••• ••••<br>${esc(s.market)} · ••• · •••••</div></div>
+    </div></div>
+    <div class="note ${open?"":"locked"}" data-note><h4>Нотатка від адміна</h4><p>${open?esc(s.note):"Відкриється разом з контактами: як працює, мінімалка, нюанси."}</p></div>
+    </div>
+    ${open?"":`<div class="mainbtn-wrap"><button class="mainbtn" data-buy-one="${s.id}">${ic("lock")}Відкрити контакти · від ${money(PRICE.one)}</button></div>`}`,dir);
+  const g=v.querySelector("[data-gal]"),dots=v.querySelectorAll(".gdots i");
+  g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,j)=>d.classList.toggle("on",j===k))},{passive:true});
+  if(S.justOpened===s.id){S.justOpened=null;}
+}
+
+/* ---------- purchase sheet ---------- */
+function sheet(ctx){
+  const s=ctx.sup?BY_ID[ctx.sup]:null;const catId=s?s.cat:ctx.cat;const c=catId?catOf(catId):null;
+  const plans=[];
+  if(s)plans.push({id:"one",t:"Один постачальник",d:s.name,p:PRICE.one});
+  if(c)plans.push({id:"cat",t:"Вся категорія",d:`${c.name} · ${DB[c.id].length} постачальників`,p:PRICE.cat,per:Math.round(PRICE.cat/DB[c.id].length)});
+  plans.push({id:"all",t:"Вся база",d:`${CATS.length} категорій · ${total()} постач.`,p:PRICE.all,per:Math.round(PRICE.all/total())});
+  let sel=ctx.pre||plans[0].id;
+  const scrim=document.createElement("div");scrim.className="scrim";
+  const el=document.createElement("div");el.className="sheet";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");el.setAttribute("aria-label","Доступ до контактів");
+  el.innerHTML=`<div class="grab"></div><div class="sheet-h"><h3>Доступ до контактів</h3><button class="icon-btn" data-x aria-label="Закрити" style="color:var(--hint)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+   <div class="plans" role="radiogroup">${plans.map(p=>`<button class="plan" role="radio" data-p="${p.id}" aria-checked="${p.id===sel}"><span class="radio"></span><span class="pt"><b>${p.t}</b><span>${esc(p.d)}</span></span><span class="price">${money(p.p)}${p.per?`<span class="per">≈ ${p.per} ₴ за контакт</span>`:""}</span></button>`).join("")}</div>
+   <p class="fine">Демо-оплата: гроші не списуються, доступ відкривається одразу.</p>
+   <div class="mainbtn-wrap" style="background:none"><button class="mainbtn" data-pay></button></div>`;
+  app.append(scrim,el);
+  const payBtn=el.querySelector("[data-pay]");
+  const upd=()=>{const p=plans.find(x=>x.id===sel);payBtn.innerHTML=`Оплатити ${money(p.p)}`;el.querySelectorAll(".plan").forEach(b=>b.setAttribute("aria-checked",b.dataset.p===sel))};
+  upd();
+  const close=()=>{scrim.classList.add("out");el.classList.add("out");setTimeout(()=>{scrim.remove();el.remove()},240)};
+  scrim.onclick=close;el.querySelector("[data-x]").onclick=close;
+  el.querySelectorAll(".plan").forEach(b=>b.onclick=()=>{sel=b.dataset.p;upd()});
+  payBtn.onclick=()=>{
+    payBtn.disabled=true;payBtn.innerHTML=`<span class="spin"></span>Оплата…`;
+    setTimeout(()=>{
+      if(sel==="one")S.sups.add(s.id);else if(sel==="cat")S.cats.add(catId);else S.all=true;
+      if(tg)try{tg.HapticFeedback.notificationOccurred("success")}catch(_){}
+      close();unlockVisible();
+      toast(sel==="all"?"Уся база відкрита":sel==="cat"?`«${c.name}» відкрито`:"Контакти відкрито");
+    },900);
+  };
+}
+function unlockVisible(){
+  const v=app.querySelector(".view:not(.leave):not(.leave-back)");
+  v.querySelectorAll("[data-stub]").forEach(st=>{
+    const s=BY_ID[st.dataset.stub];if(!has(s)||st.classList.contains("open"))return;
+    st.classList.add("tearing");setTimeout(()=>{st.classList.remove("tearing");st.classList.add("open")},720);
+  });
+  v.querySelectorAll("[data-stall].hid").forEach(el=>{const s=BY_ID[el.dataset.stall];if(has(s)){el.classList.remove("hid");el.removeAttribute("aria-label");el.textContent=s.stall}});
+  const note=v.querySelector("[data-note]");
+  if(note&&S.cur.v==="sup"){const s=BY_ID[S.cur.id];note.classList.remove("locked");note.querySelector("p").textContent=s.note}
+  v.querySelectorAll(".mainbtn-wrap").forEach(w=>{const b=w.querySelector("[data-buy-one],[data-buy-cat]");if(!b)return;
+    const ok=b.dataset.buyOne?has(BY_ID[b.dataset.buyOne]):(S.all||S.cats.has(b.dataset.buyCat));if(ok)w.remove()});
+  const acc=v.querySelector(".access");if(acc){const d=document.createElement("div");d.innerHTML=accessRow();acc.replaceWith(d.firstElementChild)}
+  v.querySelectorAll(".row[data-cat]").forEach(r=>{if((S.all||S.cats.has(r.dataset.cat))&&!r.querySelector(".own"))r.querySelector(".n").insertAdjacentHTML("beforebegin",ic("check","i own"))});
+}
+function toast(t){const d=document.createElement("div");d.className="toast";d.setAttribute("role","status");d.innerHTML=ic("check")+esc(t);app.appendChild(d);setTimeout(()=>d.remove(),1950)}
+
+/* ---------- admin bot ---------- */
+const NEW={name:"Golden Mink Fur",cat:"fur",market:"Шахе",marketCn:"沙河",floor:"3F",stall:"B-112",wechat:"demo_goldenmink",phone:"+86 100 0000 2847"};
+function botView(dir){
+  const v=mount(`<header class="chat-bar">
+     <button class="back" data-back aria-label="Назад">${ic("back")}</button>
+     <span class="ava">${ic("bot")}</span><div class="who"><b>Помічник бази</b><span>бот</span></div>
+     <button class="replay" data-replay aria-label="Почати спочатку">${ic("replay")}</button>
+     ${themeBtn()}</header>
+   <div class="chat" data-chat><div class="day">Сьогодні</div></div>
+   <div class="composer"><input placeholder="Повідомлення" aria-label="Повідомлення" data-inp><button class="send" data-send aria-label="Надіслати">${ic("send")}</button></div>`,dir);
+  runBot(v);
+}
+const now=()=>{const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")};
+function runBot(v){
+  const chat=v.querySelector("[data-chat]");const data={...NEW};let mode=null;let timers=[];
+  const T=(f,ms)=>timers.push(setTimeout(f,ms));
+  const add=html=>{chat.insertAdjacentHTML("beforeend",html);chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});return chat.lastElementChild};
+  const typing=(ms,f)=>{const t=add(`<div class="typing" aria-label="Бот друкує"><i></i><i></i><i></i></div>`);T(()=>{t.remove();f()},ms)};
+  const say=(html,cls="in")=>add(`<div class="msg ${cls}">${html}<span class="time">${now()}</span></div>`);
+  const kb=(btns,cls="")=>add(`<div class="kb ${cls}">${btns.map(b=>`<button data-k="${b[0]}">${esc(b[1])}</button>`).join("")}</div>`);
+  const killKb=()=>chat.querySelectorAll(".kb button").forEach(b=>b.disabled=true);
+  const recognized=()=>{
+    const fld=(k,val)=>`<div><span>${k}</span><b>${ic("check")}${esc(val)}</b></div>`;
+    say(`Розпізнав пост. Перевірте:<div class="rec">${fld("Категорія",catOf(data.cat).name)}${fld("Назва",data.name)}${fld("Ринок",data.market+" · "+data.floor+" · "+data.stall)}${fld("WeChat",data.wechat)}${fld("Телефон",data.phone)}${fld("Фото","3")}</div>`);
+    kb([["pub","Опублікувати"],["fix","Виправити"]]);
+  };
+  const start=()=>{
+    timers.forEach(clearTimeout);timers=[];mode=null;Object.assign(data,NEW);
+    chat.innerHTML=`<div class="day">Сьогодні</div>`;
+    T(()=>say(`<div class="fwd">${ic("fwd")}Переслано з <b>Китай · Постачальники</b></div>
+      <div class="media"><img src="img/fur-3.jpg" alt="Шуба на вішаку"><img src="img/fur-1.jpg" alt="Ряд шуб"><div class="mingpian"><span class="seal-r">金</span><b>金貂皮草</b><em>GOLDEN MINK</em>微信 demo_goldenmink<br>手机 100 0000 2847<br>沙河 3楼 B-112</div></div>
+      Норка, лис, мутон. Від 2 шт на модель. Шахе, 3 поверх. Контакти на візитці.`,"out"),350);
+    T(()=>typing(1300,recognized),900);
+  };
+  chat.addEventListener("click",e=>{
+    const b=e.target.closest("[data-k]");if(!b||b.disabled)return;const k=b.dataset.k;b.classList.add("chosen");killKb();
+    say(esc(b.textContent),"out");
+    if(k==="pub")typing(900,()=>{
+      if(!S.botDone){const c=catOf(data.cat);DB[data.cat].unshift({id:"new-1",cat:data.cat,name:data.name,market:data.market,marketCn:data.marketCn,floor:data.floor,stall:data.stall,verified:new Date(TODAY),ago:0,goods:"норка, лис, мутон",moq:"від 2 шт на модель",wechat:data.wechat,phone:data.phone,note:"Додано з посту каналу. Візитку перевірено.",photos:["img/fur-3.jpg","img/fur-1.jpg"],tone:0});BY_ID["new-1"]=DB[data.cat][0];S.botDone=true}
+      else Object.assign(BY_ID["new-1"],{cat:BY_ID["new-1"].cat,name:data.name,wechat:data.wechat,phone:data.phone,market:data.market});
+      say(`Готово. «${esc(data.name)}» тепер у категорії <b>${esc(catOf(data.cat).name)}</b> — там ${DB[data.cat].length} постачальників. Мітка «перевірено ${fmtD(TODAY)}».`);
+      kb([["open","Подивитися в каталозі"]],"one");
+    });
+    else if(k==="fix")typing(600,()=>{say("Що виправити?");kb([["f-cat","Категорія"],["f-mkt","Ринок"],["f-wx","WeChat"],["f-ph","Телефон"]])});
+    else if(k==="f-cat")typing(500,()=>{say("Оберіть категорію:");kb([["c-fur","Шуби"],["c-women","Жіночий одяг"],["c-outlet","Аутлет"]],"three")});
+    else if(k==="f-mkt")typing(500,()=>{say("Оберіть ринок:");kb([["m-Шахе","Шахе"],["m-Байма","Байма"],["m-Шісаньхан","Шісаньхан"]],"three")});
+    else if(k==="f-wx"||k==="f-ph"){mode=k;typing(500,()=>{say(k==="f-wx"?"Надішліть правильний WeChat ID.":"Надішліть правильний номер.");const i=v.querySelector("[data-inp]");i.value=k==="f-wx"?"demo_goldenmink_gz":"+86 100 0000 2874";i.focus()})}
+    else if(k.startsWith("c-")){data.cat=k.slice(2);typing(700,recognized)}
+    else if(k.startsWith("m-")){data.market=k.slice(2);data.marketCn={"Шахе":"沙河","Байма":"白马","Шісаньхан":"十三行"}[data.market];typing(700,recognized)}
+    else if(k==="open"){S.stack=[];S.cur={v:"home"};S.stack.push(S.cur);S.cur={v:"cat",id:data.cat};render(S.cur,"fwd")}
+  });
+  const send=()=>{const i=v.querySelector("[data-inp]");const t=i.value.trim();if(!t)return;i.value="";say(esc(t),"out");
+    if(mode==="f-wx"){data.wechat=t;mode=null;typing(700,recognized)}else if(mode==="f-ph"){data.phone=t;mode=null;typing(700,recognized)}
+    else typing(600,()=>say("Перешліть мені пост з каналу — я сам розберу фото, візитку й підпис."))};
+  v.querySelector("[data-send]").onclick=send;v.querySelector("[data-inp]").addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+  v.querySelector("[data-replay]").onclick=start;
+  start();
+}
+
+/* ---------- global events ---------- */
+app.addEventListener("click",async e=>{
+  const t=e.target.closest("button,[data-cat],[data-sup]");if(!t)return;
+  if(t.matches("[data-back]"))return back();
+  if(t.matches("[data-theme-btn]"))return toggleTheme();
+  if(t.dataset.cat)return go({v:"cat",id:t.dataset.cat});
+  if(t.dataset.sup)return go({v:"sup",id:t.dataset.sup});
+  if(t.matches("[data-bot]"))return go({v:"bot"});
+  if(t.dataset.buyOne)return sheet({sup:t.dataset.buyOne});
+  if(t.dataset.buyCat)return sheet({cat:t.dataset.buyCat,pre:"cat"});
+  if(t.matches("[data-buy-all]"))return sheet({pre:"all"});
+  if(t.dataset.copy){try{await navigator.clipboard.writeText(t.dataset.copy)}catch(_){}return toast("Скопійовано")}
+});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){const x=app.querySelector(".sheet [data-x]");if(x)x.click()}});
+S.cur={v:"home"};render(S.cur);
+</script>
+</body>
+</html>
