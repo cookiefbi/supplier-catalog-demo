@@ -9,10 +9,10 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --bg:#EFEFF4; --section:#FFFFFF; --text:#000000; --hint:#6D6D72; --sep:rgba(60,60,67,.18);
+  --bg:#EFEFF4; --section:#FFFFFF; --text:#000000; --hint:#636368; --sep:rgba(60,60,67,.18);
   --link:#1E73BE; --btn:#1E73BE; --btn-text:#FFFFFF; --field:#E3E3E8;
   --brass:#8C6A33; --brass-soft:#F3EBDD; --brass-ink:#6E5226;
-  --ok:#2E9E5B; --stub:#FAF8F3; --perf:#C9C2B4;
+  --ok:#2E9E5B; --ok-text:#1E7F45; --stub:#FAF8F3; --perf:#C9C2B4;
   --chat-bg:#D9E4CF; --bubble-in:#FFFFFF; --bubble-out:#E1FEC6;
   --shadow:0 8px 28px rgba(0,0,0,.14), 0 1px 3px rgba(0,0,0,.08);
   --mono:ui-monospace,"SF Mono","Roboto Mono",Menlo,Consolas,monospace;
@@ -21,9 +21,9 @@
 }
 :root[data-theme="dark"]{
   --bg:#000000; --section:#1C1C1E; --text:#FFFFFF; --hint:#98989F; --sep:rgba(84,84,88,.6);
-  --link:#5EB5F7; --btn:#1F7BC8; --btn-text:#FFFFFF; --field:#2C2C2E;
+  --link:#5EB5F7; --btn:#1A72BA; --btn-text:#FFFFFF; --field:#2C2C2E;
   --brass:#D2AE74; --brass-soft:#2E2618; --brass-ink:#E4C793;
-  --ok:#4CC97D; --stub:#232220; --perf:#4A463F;
+  --ok:#4CC97D; --ok-text:#4CC97D; --stub:#232220; --perf:#4A463F;
   --chat-bg:#0E1621; --bubble-in:#182533; --bubble-out:#2B5278;
   --shadow:0 10px 30px rgba(0,0,0,.6), 0 1px 2px rgba(0,0,0,.4);
   color-scheme:dark;
@@ -34,6 +34,8 @@ body{background:var(--bg);color:var(--text);font:16px/1.35 var(--sans);-webkit-f
 ::selection{background:color-mix(in srgb,var(--btn) 30%,transparent)}
 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 :focus-visible{outline:2px solid var(--btn);outline-offset:2px;border-radius:8px}
+[tabindex="-1"]:focus{outline:none}
+.list :focus-visible,.access :focus-visible,.plans :focus-visible{outline-offset:-2px;border-radius:inherit}
 input{font:inherit;color:inherit;caret-color:var(--btn)}
 svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
@@ -62,10 +64,10 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .back svg{width:26px;height:26px;stroke-width:2}
 
 /* home */
-.seg{display:grid;grid-template-columns:1fr 1fr;margin:12px 16px 0;padding:2px;background:var(--field);border-radius:10px}
-.seg button{height:32px;border-radius:8px;font-size:14px;font-weight:500;color:var(--text)}
-.seg button[aria-pressed="true"]{background:var(--section);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
-:root[data-theme="dark"] .seg button[aria-pressed="true"]{background:#636366}
+/* entry to the admin story: a pushed screen, so it reads as a row with a chevron, not a tab */
+.admin-entry{margin-top:12px}
+.admin-entry .t{display:flex;flex-direction:column;gap:2px;padding:9px 0}
+.admin-entry .t small{font-size:13px;color:var(--hint)}
 .search{display:flex;align-items:center;gap:6px;margin:12px 16px 0;height:38px;padding:0 10px;border-radius:10px;background:var(--field);color:var(--hint)}
 .search svg{width:18px;height:18px}
 .search input{flex:1;border:0;background:none;outline:none;font-size:16px;color:var(--text);min-width:0}
@@ -76,15 +78,31 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .access b{display:block;font-size:15px;font-weight:600}
 .access span{font-size:13px;color:var(--hint)}
 .access .go{margin-left:auto;color:var(--link);font-size:15px;font-weight:500;padding:8px 0 8px 8px}
-.access.full .seal{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.access.full .seal,.access.some .seal{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+/* partial access: the row opens "Мої контакти", the trailing link sells the whole base */
+.access.some{padding:0;flex-direction:column;align-items:stretch;gap:0;overflow:hidden}
+.access-main{display:flex;align-items:center;gap:12px;padding:12px 14px;text-align:left;width:100%}
+.access-main > div{flex:1;min-width:0}
+.access-main .chev{width:16px;height:16px;color:var(--hint);opacity:.6;stroke-width:2.2;flex:none}
+.access-main:active,.access.some .go:active{background:var(--field)}
+.access.some .go{margin:0;padding:0 14px 0 60px;min-height:44px;text-align:left;position:relative}
+.access.some .go::before{content:"";position:absolute;top:0;left:60px;right:0;border-top:.5px solid var(--sep)}
+.access .go{white-space:nowrap;flex:none}
 .cap{margin:22px 32px 6px;font-size:13px;color:var(--hint);text-transform:uppercase;letter-spacing:.02em}
 .list{margin:0 16px;background:var(--section);border-radius:12px;overflow:hidden}
 .row{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:0 12px 0 14px;text-align:left;position:relative}
 .row:active{background:var(--field)}
 .row + .row::before{content:"";position:absolute;top:0;left:58px;right:0;border-top:.5px solid var(--sep)}
-.row .ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 17%,var(--section));flex:none}
-:root[data-theme="dark"] .row .ic{color:color-mix(in srgb,var(--c) 70%,#fff);background:color-mix(in srgb,var(--c) 22%,var(--section))}
-.row .ic svg{width:19px;height:19px;stroke-width:2.1}
+.ic{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 17%,var(--section));flex:none}
+:root[data-theme="dark"] .ic{color:color-mix(in srgb,var(--c) 70%,#fff);background:color-mix(in srgb,var(--c) 22%,var(--section))}
+.ic svg{width:19px;height:19px;stroke-width:2.1}
+/* photo-less suppliers: the category tile stands in, at list size on cards and a step up in the supplier header */
+.card .ic{width:40px;height:40px}
+.card .ic svg{width:22px;height:22px}
+.sup-id{display:flex;align-items:center;gap:12px;margin:0 0 6px}
+.sup-id .ic{width:44px;height:44px;border-radius:10px}
+.sup-id .ic svg{width:24px;height:24px}
+.sup-id h2{margin:0}
 .row .t{flex:1;font-size:16px;font-weight:400;padding:12px 0}
 .row .n{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:15px;color:var(--hint);min-width:2.4ch;text-align:right}
 .row .chev{width:16px;height:16px;color:var(--hint);opacity:.6;stroke-width:2.2}
@@ -103,9 +121,8 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .card{background:var(--section);border-radius:14px;overflow:hidden;text-align:left;width:100%;display:block}
 .card:active{transform:scale(.99)}
 .card-main{display:flex;gap:12px;padding:12px}
-.ph{position:relative;flex:none;width:92px;height:92px;border-radius:10px;overflow:hidden;display:grid;place-items:center}
+.ph{position:relative;flex:none;width:72px;height:72px;border-radius:10px;overflow:hidden;display:grid;place-items:center}
 .ph img{width:100%;height:100%;object-fit:cover;display:block}
-.ph svg{width:38px;height:38px;stroke-width:1.3;opacity:.55}
 .ph .cnt{position:absolute;right:5px;bottom:5px;font:600 11px/1 var(--sans);color:#fff;background:rgba(0,0,0,.45);padding:3px 5px;border-radius:6px}
 .meta{min-width:0;flex:1;display:flex;flex-direction:column;gap:5px}
 .meta h3{margin:0;font-size:16px;font-weight:600;line-height:1.2}
@@ -145,11 +162,11 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .gallery::-webkit-scrollbar{display:none}
 .gallery > *{flex:0 0 100%;scroll-snap-align:start;aspect-ratio:4/4.4;display:grid;place-items:center}
 .gallery img{width:100%;height:100%;object-fit:cover}
-.gallery svg{width:72px;height:72px;stroke-width:1.1;opacity:.5}
 .gdots{display:flex;justify-content:center;gap:6px;padding:10px 0 0;background:var(--section)}
 .gdots i{width:6px;height:6px;border-radius:50%;background:var(--sep)}
 .gdots i.on{background:var(--text)}
 .sup-head{background:var(--section);padding:12px 16px 16px}
+.sup-head.flat{padding-top:16px}
 .sup-head h2{margin:0 0 4px;font-size:24px;font-weight:700;letter-spacing:-.015em}
 .sup-head .goods{white-space:normal;font-size:15px}
 .cells{display:grid;grid-template-columns:repeat(3,1fr);margin:14px 0 0;border-top:.5px solid var(--sep);border-bottom:.5px solid var(--sep)}
@@ -208,13 +225,16 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 .plan .pt b{display:block;font-size:16px;font-weight:600}
 .plan .pt span{font-size:13.5px;color:var(--hint)}
 .plan .price{font-variant-numeric:tabular-nums;font-size:16px;font-weight:600;white-space:nowrap}
-.plan .per{display:block;font:12px var(--sans);color:var(--ok);text-align:right;margin-top:2px}
+.plan .per{display:block;font:12px var(--sans);color:var(--ok-text);text-align:right;margin-top:2px}
 .fine{margin:10px 32px 0;font-size:12.5px;color:var(--hint);text-align:center}
 
 /* toast */
 .toast{position:absolute;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;background:rgba(30,30,30,.92);color:#fff;font-size:14px;padding:10px 14px;border-radius:12px;display:flex;align-items:center;gap:8px;animation:toast 1.9s ease both;white-space:nowrap}
 .toast svg{width:18px;height:18px;color:#4CD964;stroke-width:2.4}
 @keyframes toast{0%{opacity:0;transform:translate(-50%,8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
+/* on the supplier page the contacts sit low; the toast drops from under the top bar instead of covering them */
+.toast.top{bottom:auto;top:64px;animation-name:toast-top}
+@keyframes toast-top{0%{opacity:0;transform:translate(-50%,-8px)}12%,82%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
 
 /* bot chat */
 .chat-bar{display:flex;align-items:center;gap:10px;height:56px;padding:0 8px 0 2px;background:var(--section);border-bottom:.5px solid var(--sep);flex:none}
@@ -272,7 +292,7 @@ svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 </style>
 </head>
 <body>
-<div id="app" aria-live="polite"></div>
+<div id="app"></div>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
@@ -379,6 +399,8 @@ Object.assign(DB.fur[0],{name:"Snow Fox Fur",market:"Шахе",marketCn:"沙河"
   goods:"шуби з лиса й песця, норкові куртки, мутон",moq:"від 2 шт на модель",wechat:"demo_snowfox_218",phone:"+86 100 0000 4172",
   note:"Свій цех у Хебеї, тому ціни нижчі за сусідів. Лис і песець в наявності, норку шиють під замовлення за 10 днів. Мікс кольорів дозволяють.",
   photos:["img/fur-1.jpg","img/fur-2.jpg","img/fur-3.jpg"]});
+// a few more Шуби suppliers get their own frames: img/fur-c*.jpg are crops of the approved fur-1..3 stall photos
+[["img/fur-c1.jpg"],["img/fur-c2.jpg","img/fur-c3.jpg"],["img/fur-c4.jpg"],["img/fur-c5.jpg"]].forEach((p,k)=>DB.fur[k+1].photos=p);
 Object.values(DB).flat().forEach(s=>BY_ID[s.id]=s);
 const catOf=id=>CATS.find(c=>c.id===id);
 const total=()=>CATS.reduce((a,c)=>a+DB[c.id].length,0);
@@ -399,10 +421,10 @@ else matchMedia("(prefers-color-scheme: dark)").addEventListener("change",e=>set
 const toggleTheme=()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
 
 /* ---------- placeholders ---------- */
-function phStyle(s){const mix=[30,45,60,75][s.tone];return `background:color-mix(in srgb,var(--brass-soft) ${mix}%,var(--field));color:var(--brass)`}
+const catTile=id=>{const c=catOf(id);return `<span class="ic" style="--c:${c.color}" aria-hidden="true">${ic(c.icon)}</span>`};
 function thumb(s){
-  if(s.photos.length)return `<div class="ph"><img src="${s.photos[0]}" alt="" loading="lazy"><span class="cnt">${s.photos.length} фото</span></div>`;
-  return `<div class="ph" style="${phStyle(s)}">${ic(catOf(s.cat).icon)}</div>`;
+  if(s.photos.length)return `<div class="ph"><img src="${s.photos[0]}" alt="" loading="lazy">${s.photos.length>1?`<span class="cnt">${s.photos.length} фото</span>`:""}</div>`;
+  return catTile(s.cat);
 }
 const mask=(str,keep)=>str.slice(0,keep)+str.slice(keep).replace(/[^\s+\-]/g,"•");
 
@@ -415,34 +437,64 @@ function mount(html,dir,after){
     setTimeout(()=>old.remove(),350)}else if(old)old.remove();
   if(dir==="back")v.style.zIndex=1;
   after&&after(v);
+  if(dir){const h=v.querySelector("h1,.who b");if(h&&document.activeElement&&document.activeElement!==document.body)h.setAttribute("tabindex","-1"),h.focus({preventScroll:true})}
   if(tg){S.stack.length?tg.BackButton.show():tg.BackButton.hide()}
   return v;
 }
-function go(route,push=true){if(push)S.stack.push(S.cur);S.cur=route;render(route,"fwd")}
-function back(){if(!S.stack.length)return;S.cur=S.stack.pop();render(S.cur,"back")}
+/* Every screen is a history entry, so the system back gesture (outside Telegram too) steps up a level
+   instead of leaving the demo. UI back buttons go through history.back(); popstate does the rendering. */
+const hist=(mode)=>{try{history[mode]({d:S.stack.length,r:S.cur},"")}catch(_){}};
+function go(route,push=true){if(push)S.stack.push(S.cur);S.cur=route;hist("pushState");render(route,"fwd")}
+function back(){if(!S.stack.length)return;history.state&&history.state.d===S.stack.length?history.back():popTo(S.stack.length-1)}
+function popTo(d){S.cur=S.stack[d];S.stack.length=d;render(S.cur,"back")}
+addEventListener("popstate",e=>{
+  const x=app.querySelector(".sheet [data-x]");if(x)x.click();
+  const st=e.state;if(!st)return;
+  if(st.d<S.stack.length)popTo(st.d);
+  else if(st.d>S.stack.length){S.stack.push(S.cur);S.cur=st.r;render(S.cur,"fwd")}
+});
 if(tg)tg.BackButton.onClick(back);
 function render(r,dir){
   if(r.v==="home")return homeView(dir,r);
   if(r.v==="cat")return catView(r.id,dir);
   if(r.v==="sup")return supView(r.id,dir);
   if(r.v==="bot")return botView(dir);
+  if(r.v==="mine")return mineView(dir);
 }
 const bar=(title,sub)=>`<header class="bar">
   ${S.stack.length?`<button class="back" data-back aria-label="Назад">${ic("back")}<span>Назад</span></button>`:`<span style="width:44px"></span>`}
-  <h1>${esc(title)}${sub?`<span class="sub">${esc(sub)}</span>`:""}</h1>
+  <h1 tabindex="-1">${esc(title)}${sub?`<span class="sub">${esc(sub)}</span>`:""}</h1>
   ${themeBtn()}</header>`;
 const themeBtn=()=>{const d=document.documentElement.dataset.theme==="dark";return `<button class="icon-btn" data-theme-btn aria-label="${d?"Світла тема":"Темна тема"}">${ic(d?"sun":"moon")}</button>`};
 
 function accessRow(){
   if(S.all)return `<div class="access full"><div class="seal">${ic("check")}</div><div><b>Уся база відкрита</b><span>${total()} постачальників</span></div></div>`;
-  const parts=[];if(S.cats.size)parts.push(S.cats.size+" "+(S.cats.size===1?"категорія":"категорії"));if(S.sups.size)parts.push(S.sups.size+" постач.");
-  return `<button class="access" data-buy-all style="width:calc(100% - 32px);text-align:left"><div class="seal">${ic("lock")}</div><div><b>${parts.length?"Відкрито: "+parts.join(", "):"Контакти закриті"}</b><span>Уся база — ${money(PRICE.all)}</span></div><span class="go">Відкрити</span></button>`;
+  const all=`Уся база · ${money(PRICE.all)}`;
+  const {cats,sups}=mine();
+  if(!cats.length&&!sups.length)return `<button class="access" data-buy-all style="width:calc(100% - 32px);text-align:left"><div class="seal">${ic("lock")}</div><div><b>Контакти закриті</b><span>Від ${money(PRICE.one)} за постачальника</span></div><span class="go">${all}</span></button>`;
+  const what=[cats.map(c=>c.name).join(", "),sups.length?supWord(sups.length):""].filter(Boolean).join(" + ");
+  return `<div class="access some"><button class="access-main" data-mine><div class="seal">${ic("check")}</div><div><b>Мій доступ: ${esc(what)}</b><span>Мої контакти</span></div>${ic("chev","i chev")}</button><button class="go" data-buy-all>${all}</button></div>`;
+}
+/* what the buyer owns; suppliers inside an owned category are not counted twice */
+function mine(){
+  const cats=CATS.filter(c=>S.cats.has(c.id));
+  const sups=[...S.sups].map(id=>BY_ID[id]).filter(s=>!S.cats.has(s.cat));
+  return {cats,sups};
+}
+const supWord=n=>{const m10=n%10,m100=n%100;return n+" "+(m10===1&&m100!==11?"постачальник":m10>=2&&m10<=4&&(m100<12||m100>14)?"постачальники":"постачальників")};
+function mineView(dir){
+  const {cats,sups}=mine();
+  mount(`${bar("Мої контакти")}<div class="scroll">
+    ${S.all?`<p class="foot" style="margin-top:16px">Відкрита вся база: ${total()} постачальників.</p>`:""}
+    ${cats.length?`<div class="cap">Категорії</div><div class="list">${cats.map(c=>`<button class="row" data-cat="${c.id}"><span class="ic" style="--c:${c.color}">${ic(c.icon)}</span><span class="t">${c.name}</span><span class="n">${DB[c.id].length}</span>${ic("chev","i chev")}</button>`).join("")}</div>`:""}
+    ${sups.length?`<div class="cap">Постачальники · ${sups.length}</div><div class="cards" style="padding-top:0">${sups.map(card).join("")}</div>`:""}
+  </div>`,dir);
 }
 function homeView(dir,r){
   const q=(r&&r.q)||"";
   const v=mount(`${bar("База постачальників","Китай · опт")}
   <div class="scroll">
-    <div class="seg" role="group"><button aria-pressed="true">Каталог</button><button data-bot aria-pressed="false">Як додає адмін</button></div>
+    <div class="list admin-entry"><button class="row" data-bot><span class="ic" style="--c:var(--link)">${ic("bot")}</span><span class="t">Як додає адмін<small>Пересилає пост боту</small></span>${ic("chev","i chev")}</button></div>
     <label class="search">${ic("search")}<input type="search" placeholder="Назва, ринок, товар" value="${esc(q)}" aria-label="Пошук" enterkeyhint="search"></label>
     <div data-res></div>
   </div>`,dir);
@@ -472,7 +524,8 @@ const stallTag=s=>has(s)?`<span data-stall="${s.id}">${s.stall}</span>`:`<span c
 const ver=s=>`<div class="ver${s.ago>30?" old":""}"><i></i>перевірено <span class="mono">${fmtD(s.verified)}</span></div>`;
 function card(s){
   const open=has(s);
-  return `<button class="card" data-sup="${s.id}">
+  const label=`${s.name}, ${s.market}${s.floor?" "+s.floor:", фабрика"}, перевірено ${fmtD(s.verified)}, ${open?"контакти відкриті":"контакти закриті"}`;
+  return `<button class="card" data-sup="${s.id}" aria-label="${esc(label)}">
     <div class="card-main">${thumb(s)}<div class="meta"><h3>${esc(s.name)}</h3>${code(s)}<div class="goods">${esc(s.goods)}</div>${ver(s)}</div></div>
     <div class="stub ${open?"open":""}" data-stub="${s.id}">
       <div class="stub-in"><span class="f">${ic("wechat")}${esc(s.wechat)}</span><span class="f">${ic("phone")}${esc(s.phone.slice(-9))}</span></div>
@@ -492,14 +545,15 @@ function catView(id,dir){
 }
 function supView(id,dir){
   const s=BY_ID[id];const c=catOf(s.cat);const open=has(s);
-  const slides=s.photos.length?s.photos.map(p=>`<div><img src="${p}" alt="Товар ${esc(s.name)}"></div>`).join("")
-    :[0,1,2].map(k=>`<div style="${phStyle({...s,tone:(s.tone+k)%4})}">${ic(c.icon)}</div>`).join("");
-  const n=s.photos.length||3;
+  const n=s.photos.length;
+  const gallery=n?`<div class="gallery" data-gal>${s.photos.map(p=>`<div><img src="${p}" alt="Товар ${esc(s.name)}"></div>`).join("")}</div>`
+    +(n>1?`<div class="gdots">${s.photos.map((_,k)=>`<i class="${k?"":"on"}"></i>`).join("")}</div>`:""):"";
+  const title=n?`<h2>${esc(s.name)}</h2>`:`<div class="sup-id">${catTile(s.cat)}<h2>${esc(s.name)}</h2></div>`;
   const addrUa=s.floor?`${esc(s.market)}, ${s.floor.replace("F"," поверх")}, павільйон <span class="nb">${s.stall.replace("-","‑")}</span>`:`${esc(s.market)}, фабрика`;
   const addrCn=s.floor?`广州 ${s.marketCn} ${s.floor.replace("F","楼")} ${s.stall}`:`${s.marketCn} 工厂`;
   const v=mount(`${bar(c.name)}<div class="scroll">
-    <div class="gallery" data-gal>${slides}</div><div class="gdots">${Array.from({length:n},(_,k)=>`<i class="${k?"":"on"}"></i>`).join("")}</div>
-    <div class="sup-head"><h2>${esc(s.name)}</h2><div class="goods">${esc(s.goods)} · ${esc(s.moq)}</div>
+    ${gallery}
+    <div class="sup-head${n?"":" flat"}">${title}<div class="goods">${esc(s.goods)} · ${esc(s.moq)}</div>
       <div class="cells"><div><small>Ринок</small><b>${esc(s.market)}</b></div><div><small>${s.floor?"Поверх":"Тип"}</small><b>${s.floor||"OEM"}</b></div><div><small>${s.floor?"Павільйон":"Партія"}</small><b>${s.floor?stallTag(s):esc(s.moq.replace("від ",""))}</b></div></div>
       <div style="margin-top:12px">${ver(s)}</div></div>
     <div class="cap">Контакти</div>
@@ -515,7 +569,7 @@ function supView(id,dir){
     </div>
     ${open?"":`<div class="mainbtn-wrap"><button class="mainbtn" data-buy-one="${s.id}">${ic("lock")}Відкрити контакти · від ${money(PRICE.one)}</button></div>`}`,dir);
   const g=v.querySelector("[data-gal]"),dots=v.querySelectorAll(".gdots i");
-  g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,j)=>d.classList.toggle("on",j===k))},{passive:true});
+  if(g&&dots.length)g.addEventListener("scroll",()=>{const k=Math.round(g.scrollLeft/g.clientWidth);dots.forEach((d,j)=>d.classList.toggle("on",j===k))},{passive:true});
   if(S.justOpened===s.id){S.justOpened=null;}
 }
 
@@ -533,29 +587,48 @@ function sheet(ctx){
    <div class="plans" role="radiogroup">${plans.map(p=>`<button class="plan" role="radio" data-p="${p.id}" aria-checked="${p.id===sel}"><span class="radio"></span><span class="pt"><b>${p.t}</b><span>${esc(p.d)}</span></span><span class="price">${money(p.p)}${p.per?`<span class="per">≈ ${p.per} ₴ за контакт</span>`:""}</span></button>`).join("")}</div>
    <p class="fine">Демо-оплата: гроші не списуються, доступ відкривається одразу.</p>
    <div class="mainbtn-wrap" style="background:none"><button class="mainbtn" data-pay></button></div>`;
+  const opener=document.activeElement,under=app.querySelector(".view:not(.leave):not(.leave-back)");
+  if(under)under.inert=true;
   app.append(scrim,el);
   const payBtn=el.querySelector("[data-pay]");
   const upd=()=>{const p=plans.find(x=>x.id===sel);payBtn.innerHTML=`Оплатити ${money(p.p)}`;el.querySelectorAll(".plan").forEach(b=>b.setAttribute("aria-checked",b.dataset.p===sel))};
-  upd();
-  const close=()=>{scrim.classList.add("out");el.classList.add("out");setTimeout(()=>{scrim.remove();el.remove()},240)};
+  const roving=()=>el.querySelectorAll(".plan").forEach(b=>b.tabIndex=b.dataset.p===sel?0:-1);
+  upd();roving();el.querySelector(`.plan[data-p="${sel}"]`).focus({preventScroll:true});
+  const close=()=>{if(el.classList.contains("out"))return;scrim.classList.add("out");el.classList.add("out");if(under)under.inert=false;
+    const back=opener&&opener.isConnected?opener:under&&[".contact-tag .copy",".cards .card","h1"].map(q=>under.querySelector(q)).find(Boolean);if(back)back.focus({preventScroll:true});
+    setTimeout(()=>{scrim.remove();el.remove()},240)};
   scrim.onclick=close;el.querySelector("[data-x]").onclick=close;
-  el.querySelectorAll(".plan").forEach(b=>b.onclick=()=>{sel=b.dataset.p;upd()});
+  el.querySelectorAll(".plan").forEach(b=>b.onclick=()=>{sel=b.dataset.p;upd();roving()});
+  el.querySelector(".plans").addEventListener("keydown",e=>{const d={ArrowDown:1,ArrowRight:1,ArrowUp:-1,ArrowLeft:-1}[e.key];if(!d)return;e.preventDefault();
+    const i=plans.findIndex(p=>p.id===sel);sel=plans[(i+d+plans.length)%plans.length].id;upd();roving();el.querySelector(`.plan[data-p="${sel}"]`).focus()});
   payBtn.onclick=()=>{
     payBtn.disabled=true;payBtn.innerHTML=`<span class="spin"></span>Оплата…`;
     setTimeout(()=>{
       if(sel==="one")S.sups.add(s.id);else if(sel==="cat")S.cats.add(catId);else S.all=true;
       if(tg)try{tg.HapticFeedback.notificationOccurred("success")}catch(_){}
-      close();unlockVisible();
+      unlockVisible();close();
       toast(sel==="all"?"Уся база відкрита":sel==="cat"?`«${c.name}» відкрито`:"Контакти відкрито");
     },900);
   };
 }
+const REDUCED=matchMedia("(prefers-reduced-motion: reduce)");
+/* Bring the contact stub into view before it tears, so the unlock is seen, not missed below the fold. */
+function revealTag(v){
+  const tag=v.querySelector(".contact-tag"),sc=v.querySelector(".scroll");
+  if(!tag||!sc||REDUCED.matches)return 0;
+  const t=tag.getBoundingClientRect(),r=sc.getBoundingClientRect(),m=16;
+  let dy=0;
+  if(t.bottom>r.bottom-m)dy=Math.min(t.bottom-r.bottom+m,t.top-r.top-m);
+  else if(t.top<r.top+m)dy=t.top-r.top-m;
+  if(Math.abs(dy)<4)return 0;
+  sc.scrollTo({top:sc.scrollTop+dy,behavior:"smooth"});
+  return 250;
+}
 function unlockVisible(){
   const v=app.querySelector(".view:not(.leave):not(.leave-back)");
-  v.querySelectorAll("[data-stub]").forEach(st=>{
-    const s=BY_ID[st.dataset.stub];if(!has(s)||st.classList.contains("open"))return;
-    st.classList.add("tearing");setTimeout(()=>{st.classList.remove("tearing");st.classList.add("open")},720);
-  });
+  const stubs=[...v.querySelectorAll("[data-stub]")].filter(st=>has(BY_ID[st.dataset.stub])&&!st.classList.contains("open"));
+  stubs.forEach(st=>{const c=st.closest(".card");if(c)c.setAttribute("aria-label",c.getAttribute("aria-label").replace("контакти закриті","контакти відкриті"))});
+  const tear=()=>stubs.forEach(st=>{st.classList.add("tearing");setTimeout(()=>{st.classList.remove("tearing");st.classList.add("open")},720)});
   v.querySelectorAll("[data-stall].hid").forEach(el=>{const s=BY_ID[el.dataset.stall];if(has(s)){el.classList.remove("hid");el.removeAttribute("aria-label");el.textContent=s.stall}});
   const note=v.querySelector("[data-note]");
   if(note&&S.cur.v==="sup"){const s=BY_ID[S.cur.id];note.classList.remove("locked");note.querySelector("p").textContent=s.note}
@@ -563,8 +636,11 @@ function unlockVisible(){
     const ok=b.dataset.buyOne?has(BY_ID[b.dataset.buyOne]):(S.all||S.cats.has(b.dataset.buyCat));if(ok)w.remove()});
   const acc=v.querySelector(".access");if(acc){const d=document.createElement("div");d.innerHTML=accessRow();acc.replaceWith(d.firstElementChild)}
   v.querySelectorAll(".row[data-cat]").forEach(r=>{if((S.all||S.cats.has(r.dataset.cat))&&!r.querySelector(".own"))r.querySelector(".n").insertAdjacentHTML("beforebegin",ic("check","i own"))});
+  /* layout is final now (main button removed); scroll, then tear once the stub is settling into view */
+  const wait=stubs.length?revealTag(v):0;
+  wait?setTimeout(tear,wait):tear();
 }
-function toast(t){const d=document.createElement("div");d.className="toast";d.setAttribute("role","status");d.innerHTML=ic("check")+esc(t);app.appendChild(d);setTimeout(()=>d.remove(),1950)}
+function toast(t){const d=document.createElement("div");d.className="toast"+(S.cur.v==="sup"?" top":"");d.setAttribute("role","status");d.innerHTML=ic("check")+esc(t);app.appendChild(d);setTimeout(()=>d.remove(),1950)}
 
 /* ---------- admin bot ---------- */
 const NEW={name:"Golden Mink Fur",cat:"fur",market:"Шахе",marketCn:"沙河",floor:"3F",stall:"B-112",wechat:"demo_goldenmink",phone:"+86 100 0000 2847"};
@@ -574,7 +650,7 @@ function botView(dir){
      <span class="ava">${ic("bot")}</span><div class="who"><b>Помічник бази</b><span>бот</span></div>
      <button class="replay" data-replay aria-label="Почати спочатку">${ic("replay")}</button>
      ${themeBtn()}</header>
-   <div class="chat" data-chat><div class="day">Сьогодні</div></div>
+   <div class="chat" data-chat role="log" aria-live="polite"><div class="day">Сьогодні</div></div>
    <div class="composer"><input placeholder="Повідомлення" aria-label="Повідомлення" data-inp><button class="send" data-send aria-label="Надіслати">${ic("send")}</button></div>`,dir);
   runBot(v);
 }
@@ -583,7 +659,7 @@ function runBot(v){
   const chat=v.querySelector("[data-chat]");const data={...NEW};let mode=null;let timers=[];
   const T=(f,ms)=>timers.push(setTimeout(f,ms));
   const add=html=>{chat.insertAdjacentHTML("beforeend",html);chat.scrollTo({top:chat.scrollHeight,behavior:"smooth"});return chat.lastElementChild};
-  const typing=(ms,f)=>{const t=add(`<div class="typing" aria-label="Бот друкує"><i></i><i></i><i></i></div>`);T(()=>{t.remove();f()},ms)};
+  const typing=(ms,f)=>{const t=add(`<div class="typing" role="status" aria-label="Бот друкує"><i></i><i></i><i></i></div>`);T(()=>{t.remove();f()},ms)};
   const say=(html,cls="in")=>add(`<div class="msg ${cls}">${html}<span class="time">${now()}</span></div>`);
   const kb=(btns,cls="")=>add(`<div class="kb ${cls}">${btns.map(b=>`<button data-k="${b[0]}">${esc(b[1])}</button>`).join("")}</div>`);
   const killKb=()=>chat.querySelectorAll(".kb button").forEach(b=>b.disabled=true);
@@ -615,7 +691,7 @@ function runBot(v){
     else if(k==="f-wx"||k==="f-ph"){mode=k;typing(500,()=>{say(k==="f-wx"?"Надішліть правильний WeChat ID.":"Надішліть правильний номер.");const i=v.querySelector("[data-inp]");i.value=k==="f-wx"?"demo_goldenmink_gz":"+86 100 0000 2874";i.focus()})}
     else if(k.startsWith("c-")){data.cat=k.slice(2);typing(700,recognized)}
     else if(k.startsWith("m-")){data.market=k.slice(2);data.marketCn={"Шахе":"沙河","Байма":"白马","Шісаньхан":"十三行"}[data.market];typing(700,recognized)}
-    else if(k==="open"){S.stack=[];S.cur={v:"home"};S.stack.push(S.cur);S.cur={v:"cat",id:data.cat};render(S.cur,"fwd")}
+    else if(k==="open"){S.stack=[{v:"home"}];S.cur={v:"cat",id:data.cat};hist("replaceState");render(S.cur,"fwd")}
   });
   const send=()=>{const i=v.querySelector("[data-inp]");const t=i.value.trim();if(!t)return;i.value="";say(esc(t),"out");
     if(mode==="f-wx"){data.wechat=t;mode=null;typing(700,recognized)}else if(mode==="f-ph"){data.phone=t;mode=null;typing(700,recognized)}
@@ -633,13 +709,14 @@ app.addEventListener("click",async e=>{
   if(t.dataset.cat)return go({v:"cat",id:t.dataset.cat});
   if(t.dataset.sup)return go({v:"sup",id:t.dataset.sup});
   if(t.matches("[data-bot]"))return go({v:"bot"});
+  if(t.matches("[data-mine]"))return go({v:"mine"});
   if(t.dataset.buyOne)return sheet({sup:t.dataset.buyOne});
   if(t.dataset.buyCat)return sheet({cat:t.dataset.buyCat,pre:"cat"});
   if(t.matches("[data-buy-all]"))return sheet({pre:"all"});
   if(t.dataset.copy){try{await navigator.clipboard.writeText(t.dataset.copy)}catch(_){}return toast("Скопійовано")}
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape"){const x=app.querySelector(".sheet [data-x]");if(x)x.click()}});
-S.cur={v:"home"};render(S.cur);
+S.cur={v:"home"};hist("replaceState");render(S.cur);
 </script>
 </body>
 </html>
